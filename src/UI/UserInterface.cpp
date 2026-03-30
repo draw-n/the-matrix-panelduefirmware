@@ -81,7 +81,7 @@ static String<controlPageMacroTextLength> controlPageMacroText[NumControlPageMac
 static PopupWindow *setTempPopup, *setRPMPopup, *movePopup, *extrudePopup, *fileListPopup, *macrosPopup, *fileDetailPopup, *baudPopup,
 		*volumePopup, *infoTimeoutPopup, *screensaverTimeoutPopup, *babystepAmountPopup, *feedrateAmountPopup, *areYouSurePopup, *keyboardPopup, *languagePopup, *coloursPopup, *screensaverPopup, *firmwareUpdatePopup;
 static StaticTextField *areYouSureTextField, *areYouSureQueryField;
-static DisplayField *emptyRoot, *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot; //*setupRoot;
+static DisplayField *emptyRoot, *baseRoot, *commonRoot, *controlRoot, *printRoot, *messageRoot, *setupRoot;
 static SingleButton *homeAllButton, *bedCompButton;
 static IconButtonWithText *homeButtons[MaxDisplayableAxes], *toolButtons[MaxSlots];
 
@@ -108,7 +108,7 @@ static IntegerButton *activeTemps[MaxSlots], *standbyTemps[MaxSlots];
 static IntegerButton *spd, *extrusionFactors[MaxSlots], *fanSpeed, *baudRateButton, *volumeButton, *infoTimeoutButton, *screensaverTimeoutButton, *feedrateAmountButton;
 static TextButton *languageButton, *coloursButton, *dimmingTypeButton, *heaterCombiningButton, *logLevelButton;
 static TextButtonWithLabel *babystepAmountButton;
-static SingleButton *moveButton, *extrudeButton; //*macroButton;
+static SingleButton *moveButton, *extrudeButton, *macroButton;
 static PopupWindow *babystepPopup;
 static AlertPopup *alertPopup;
 static CharButtonRow *keyboardRows[4];
@@ -926,8 +926,8 @@ static void CreateControlTabFields(const ColourScheme& colours)
 	mgr.SetRoot(commonRoot);
 
 	DisplayField::SetDefaultColours(colours.infoTextColour, colours.infoBackColour);
+	PixelNumber column = margin;
 	PixelNumber xyFieldWidth = (DISPLAY_X - (2 * margin) - (MaxDisplayableAxes * fieldSpacing))/(MaxDisplayableAxes + 1);
-	PixelNumber column = margin + axisLabelWidth + fieldSpacing;
 	for (size_t i = 0; i < MaxDisplayableAxes; ++i)
 	{
 		FloatField * const f = new FloatField(row6p3 + labelRowAdjust, column, xyFieldWidth, TextAlignment::Left, 2, axisNames[i]);
@@ -959,20 +959,20 @@ static void CreateControlTabFields(const ColourScheme& colours)
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
 	bedCompButton = AddIconButton(row7p7, MaxDisplayableAxes + 1, MaxDisplayableAxes + 2, IconBedComp, evSendCommand, "G32");
 
-	// filesButton = AddIconButton(row8p7, 0, 4, IconFiles, evListFiles, nullptr);
+	filesButton = AddIconButton(row8p7, 0, 4, IconFiles, evListFiles, nullptr);
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
 	moveButton = AddTextButton(row8p7, 1, 4, strings->move, evMovePopup, nullptr);
 	extrudeButton = AddTextButton(row8p7, 2, 4, strings->extrusion, evExtrudePopup, nullptr);
-	//macroButton = AddTextButton(row8p7, 3, 4, strings->macro, evListMacros, nullptr);
+	macroButton = AddTextButton(row8p7, 3, 4, strings->macro, evListMacros, nullptr);
 
 	// When there is room, we also display a few macro buttons on the right hand side
-	// for (size_t i = 0; i < NumControlPageMacroButtons; ++i)
-	// {
-	// 	// The position and width of the buttons will get corrected when we know how many tools we have
-	// 	TextButton * const b = controlPageMacroButtons[i] = new TextButton(row2 + i * rowHeight, 999, 99, nullptr, evNull);
-	// 	b->Show(false);			// hide them until we have loaded the macros
-	// 	mgr.AddField(b);
-	// }
+	for (size_t i = 0; i < NumControlPageMacroButtons; ++i)
+	{
+		// The position and width of the buttons will get corrected when we know how many tools we have
+		TextButton * const b = controlPageMacroButtons[i] = new TextButton(row2 + i * rowHeight, 999, 99, nullptr, evNull);
+		b->Show(false);			// hide them until we have loaded the macros
+		mgr.AddField(b);
+	}
 
 	controlRoot = mgr.GetRoot();
 }
@@ -1000,10 +1000,10 @@ static void CreatePrintingTabFields(const ColourScheme& colours)
 		mgr.AddField(ib);
 	}
 
-	// // Speed button
-	// mgr.AddField(spd = new IntegerButton(row7, speedColumn, stateColumnWdith - fieldSpacing, strings->speed, "%"));
-	// spd->SetValue(100);
-	// spd->SetEvent(evAdjustSpeed, "M220 S");
+	// Speed button
+	mgr.AddField(spd = new IntegerButton(row7, speedColumn, stateColumnWdith - fieldSpacing, strings->speed, "%"));
+	spd->SetValue(100);
+	spd->SetEvent(evAdjustSpeed, "M220 S");
 
 	// Fan button
 	mgr.AddField(fanSpeed = new IntegerButton(row7, fanColumn, stateColumnWdith - fieldSpacing, strings->fan, "%"));
@@ -1044,17 +1044,17 @@ static void CreatePrintingTabFields(const ColourScheme& colours)
 	const PixelNumber offset = 0;
 #endif
 
-// 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-// 	const PixelNumber reprintRow =
-// #if DISPLAY_X == 800
-// 			row9
-// #else
-// 			row8
-// #endif
-// 			;
-// 	reprintButton = new TextButton(reprintRow, speedColumn, 2 * stateColumnWdith - fieldSpacing, strings->reprint, evReprint);
-// 	reprintButton->Show(false);
-// 	mgr.AddField(reprintButton);
+	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
+	const PixelNumber reprintRow =
+#if DISPLAY_X == 800
+			row9
+#else
+			row8
+#endif
+			;
+	reprintButton = new TextButton(reprintRow, speedColumn, 2 * stateColumnWdith - fieldSpacing, strings->reprint, evReprint);
+	reprintButton->Show(false);
+	mgr.AddField(reprintButton);
 
 	DisplayField::SetDefaultColours(colours.progressBarColour,colours. progressBarBackColour);
 	mgr.AddField(printProgressBar = new ProgressBar(row8 + offset + (rowHeight - progressBarHeight)/2, margin, progressBarHeight, DisplayX - 2 * margin));
@@ -1071,8 +1071,8 @@ static void CreatePrintingTabFields(const ColourScheme& colours)
 static void CreateMessageTabFields(const ColourScheme& colours)
 {
 	mgr.SetRoot(baseRoot);
-	// DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
-	// mgr.AddField(new IconButton(margin,  DisplayX - margin - keyboardButtonWidth, keyboardButtonWidth, IconKeyboard, evKeyboard));
+	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonImageBackColour);
+	mgr.AddField(new IconButton(margin,  DisplayX - margin - keyboardButtonWidth, keyboardButtonWidth, IconKeyboard, evKeyboard));
 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
 	mgr.AddField(new StaticTextField(margin + labelRowAdjust, margin, DisplayX - 2 * margin - keyboardButtonWidth, TextAlignment::Centre, strings->messages));
 	PixelNumber row = firstMessageRow;
@@ -1090,57 +1090,57 @@ static void CreateMessageTabFields(const ColourScheme& colours)
 }
 
 // Create the fields for the Setup tab
-// static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
-// {
-// 	mgr.SetRoot(baseRoot);
-// 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
-// 	// The firmware version field doubles up as an area for displaying debug messages, so make it the full width of the display
-// 	mgr.AddField(fwVersionField = new TextField(row1, margin, DisplayX, TextAlignment::Left, strings->firmwareVersion, VERSION_TEXT));
-// 	mgr.AddField(freeMem = new IntegerField(row2, margin, DisplayX/2 - margin, TextAlignment::Left, "Free RAM: "));
-// 	mgr.AddField(new ColourGradientField(ColourGradientTopPos, ColourGradientLeftPos, ColourGradientWidth, ColourGradientHeight));
+static void CreateSetupTabFields(uint32_t language, const ColourScheme& colours)
+{
+	mgr.SetRoot(baseRoot);
+	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
+	// The firmware version field doubles up as an area for displaying debug messages, so make it the full width of the display
+	mgr.AddField(fwVersionField = new TextField(row1, margin, DisplayX, TextAlignment::Left, strings->firmwareVersion, VERSION_TEXT));
+	mgr.AddField(freeMem = new IntegerField(row2, margin, DisplayX/2 - margin, TextAlignment::Left, "Free RAM: "));
+	mgr.AddField(new ColourGradientField(ColourGradientTopPos, ColourGradientLeftPos, ColourGradientWidth, ColourGradientHeight));
 
-// 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
-// 	baudRateButton = AddIntegerButton(row3, 0, 3, nullptr, " baud", evSetBaudRate);
-// 	baudRateButton->SetValue(nvData.GetBaudRate());
-// 	volumeButton = AddIntegerButton(row3, 1, 3, strings->volume, nullptr, evSetVolume);
-// 	volumeButton->SetValue(nvData.GetVolume());
-// 	languageButton = AddTextButton(row3, 2, 3, LanguageTables[language].languageName, evSetLanguage, nullptr);
-// 	AddTextButton(row4, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
-// 	AddTextButton(row4, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
-// 	AddTextButton(row4, 2, 3, strings->invertDisplay, evInvertY, nullptr);
-// 	coloursButton = AddTextButton(row5, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
-// 	AddTextButton(row5, 1, 3, strings->brightnessDown, evDimmer, nullptr);
-// 	AddTextButton(row5, 2, 3, strings->brightnessUp, evBrighter, nullptr);
-// 	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)nvData.GetDisplayDimmerType()], evSetDimmingType, nullptr);
-// 	infoTimeoutButton = AddIntegerButton(row6, 1, 3, strings->infoTimeout, nullptr, evSetInfoTimeout);
-// 	infoTimeoutButton->SetValue(infoTimeout);
-// 	AddTextButton(row6, 2, 3, strings->clearSettings, evFactoryReset, nullptr);
-// 	screensaverTimeoutButton = AddIntegerButton(row7, 0, 3, strings->screensaverAfter, nullptr, evSetScreensaverTimeout);
-// 	screensaverTimeoutButton->SetValue(nvData.GetScreensaverTimeout() / 1000);
+	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour);
+	baudRateButton = AddIntegerButton(row3, 0, 3, nullptr, " baud", evSetBaudRate);
+	baudRateButton->SetValue(nvData.GetBaudRate());
+	volumeButton = AddIntegerButton(row3, 1, 3, strings->volume, nullptr, evSetVolume);
+	volumeButton->SetValue(nvData.GetVolume());
+	languageButton = AddTextButton(row3, 2, 3, LanguageTables[language].languageName, evSetLanguage, nullptr);
+	AddTextButton(row4, 0, 3, strings->calibrateTouch, evCalTouch, nullptr);
+	AddTextButton(row4, 1, 3, strings->mirrorDisplay, evInvertX, nullptr);
+	AddTextButton(row4, 2, 3, strings->invertDisplay, evInvertY, nullptr);
+	coloursButton = AddTextButton(row5, 0, 3, strings->colourSchemeNames[colours.index], evSetColours, nullptr);
+	AddTextButton(row5, 1, 3, strings->brightnessDown, evDimmer, nullptr);
+	AddTextButton(row5, 2, 3, strings->brightnessUp, evBrighter, nullptr);
+	dimmingTypeButton = AddTextButton(row6, 0, 3, strings->displayDimmingNames[(unsigned int)nvData.GetDisplayDimmerType()], evSetDimmingType, nullptr);
+	infoTimeoutButton = AddIntegerButton(row6, 1, 3, strings->infoTimeout, nullptr, evSetInfoTimeout);
+	infoTimeoutButton->SetValue(infoTimeout);
+	AddTextButton(row6, 2, 3, strings->clearSettings, evFactoryReset, nullptr);
+	screensaverTimeoutButton = AddIntegerButton(row7, 0, 3, strings->screensaverAfter, nullptr, evSetScreensaverTimeout);
+	screensaverTimeoutButton->SetValue(nvData.GetScreensaverTimeout() / 1000);
 
-// 	const PixelNumber width = CalcWidth(3);
-// 	mgr.AddField(babystepAmountButton = new TextButtonWithLabel(row7, CalcXPos(1, width), width, babystepAmounts[nvData.GetBabystepAmountIndex()], evSetBabystepAmount, nullptr, strings->babystepAmount));
+	const PixelNumber width = CalcWidth(3);
+	mgr.AddField(babystepAmountButton = new TextButtonWithLabel(row7, CalcXPos(1, width), width, babystepAmounts[nvData.GetBabystepAmountIndex()], evSetBabystepAmount, nullptr, strings->babystepAmount));
 
-// 	feedrateAmountButton = AddIntegerButton(row7, 2, 3, strings->feedrate, nullptr, evSetFeedrate);
-// 	feedrateAmountButton->SetValue(nvData.GetFeedrate());
+	feedrateAmountButton = AddIntegerButton(row7, 2, 3, strings->feedrate, nullptr, evSetFeedrate);
+	feedrateAmountButton->SetValue(nvData.GetFeedrate());
 
-// 	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
-// 	logLevelButton = AddTextButton(row8, 1, 3, strings->logLevelNames[(unsigned int)MessageLog::LogLevelGet()], evSetLogLevel, nullptr);
+	heaterCombiningButton  = AddTextButton(row8, 0, 3, strings->heaterCombineTypeNames[(unsigned int)nvData.GetHeaterCombineType()], evSetHeaterCombineType, nullptr);
+	logLevelButton = AddTextButton(row8, 1, 3, strings->logLevelNames[(unsigned int)MessageLog::LogLevelGet()], evSetLogLevel, nullptr);
 
-// 	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
-// 	mgr.AddField(ipAddressField = new TextField(row9, margin, DisplayX/2 - margin, TextAlignment::Left, "IP: ", ipAddress.c_str()));
-// 	setupRoot = mgr.GetRoot();
-// }
+	DisplayField::SetDefaultColours(colours.labelTextColour, colours.defaultBackColour);
+	mgr.AddField(ipAddressField = new TextField(row9, margin, DisplayX/2 - margin, TextAlignment::Left, "IP: ", ipAddress.c_str()));
+	setupRoot = mgr.GetRoot();
+}
 
 // Create the fields that are displayed on all pages
 static void CreateCommonFields(const ColourScheme& colours)
 {
 	DisplayField::SetDefaultColours(colours.buttonTextColour, colours.buttonTextBackColour, colours.buttonBorderColour, colours.buttonGradColour,
 									colours.buttonPressedBackColour, colours.buttonPressedGradColour, colours.pal);
-	tabControl = AddTextButton(rowTabs, 0, 3, strings->control, evTabControl, nullptr);
-	tabStatus = AddTextButton(rowTabs, 1, 3, strings->status, evTabStatus, nullptr);
-	tabMsg = AddTextButton(rowTabs, 2, 3, strings->console, evTabMsg, nullptr);
-	//tabSetup = AddTextButton(rowTabs, 3, 4, strings->setup, evTabSetup, nullptr);
+	tabControl = AddTextButton(rowTabs, 0, 4, strings->control, evTabControl, nullptr);
+	tabStatus = AddTextButton(rowTabs, 1, 4, strings->status, evTabStatus, nullptr);
+	tabMsg = AddTextButton(rowTabs, 2, 4, strings->console, evTabMsg, nullptr);
+	tabSetup = AddTextButton(rowTabs, 3, 4, strings->setup, evTabSetup, nullptr);
 }
 
 static void CreateMainPages(uint32_t language, const ColourScheme& colours)
@@ -1165,7 +1165,7 @@ static void CreateMainPages(uint32_t language, const ColourScheme& colours)
 	CreateControlTabFields(colours);
 	CreatePrintingTabFields(colours);
 	CreateMessageTabFields(colours);
-	// CreateSetupTabFields(language, colours);
+	CreateSetupTabFields(language, colours);
 	CreateScreensaverPopup();
 	CreateFirmwareUpdatePopup();
 }
@@ -1631,14 +1631,14 @@ namespace UI
 			break;
 		case evTabMsg:
 			mgr.SetRoot(messageRoot);
-			// if (keyboardIsDisplayed) {
-			// 	keyboardDataHandler = SendGcode;
-			// 	mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY, false);
-			// }
+			if (keyboardIsDisplayed) {
+				keyboardDataHandler = SendGcode;
+				mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY, false);
+			}
 			break;
-		// case evTabSetup:
-		// 	mgr.SetRoot(setupRoot);
-		// 	break;
+		case evTabSetup:
+			mgr.SetRoot(setupRoot);
+			break;
 		default:
 			mgr.SetRoot(commonRoot);
 			break;
@@ -1658,10 +1658,10 @@ namespace UI
 			if (currentTab != nullptr)
 			{
 				currentTab->Press(false, 0);			// remove highlighting from the old tab
-				// if (currentTab->GetEvent() == evTabSetup && nvData.IsSaveNeeded())
-				// {
-				// 	SaveSettings();						// leaving the Control tab and we have changed settings, so save them
-				// }
+				if (currentTab->GetEvent() == evTabSetup && nvData.IsSaveNeeded())
+				{
+					SaveSettings();						// leaving the Control tab and we have changed settings, so save them
+				}
 			}
 			newTab->Press(true, 0);						// highlight the new tab
 			currentTab = newTab;
@@ -1714,13 +1714,13 @@ namespace UI
 		}
 	}
 
-	// // Pop up the keyboard
-	// void ShowKeyboard()
-	// {
-	// 	keyboardDataHandler = SendGcode;
-	// 	mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY);
-	// 	keyboardIsDisplayed = true;
-	// }
+	// Pop up the keyboard
+	void ShowKeyboard()
+	{
+		keyboardDataHandler = SendGcode;
+		mgr.SetPopup(keyboardPopup, AutoPlace, keyboardPopupY);
+		keyboardIsDisplayed = true;
+	}
 
 	// This is called when the Cancel button on a popup is pressed
 	void PopupCancelled()
@@ -2305,7 +2305,7 @@ namespace UI
 		case evTabControl:
 		case evTabStatus:
 		case evTabMsg:
-		// case evTabSetup:
+		case evTabSetup:
 
 		case evExtrudeAmount:
 		case evExtrudeRate:
@@ -2356,7 +2356,7 @@ namespace UI
 			case evTabControl:
 			case evTabStatus:
 			case evTabMsg:
-			// case evTabSetup:
+			case evTabSetup:
 				if (ChangePage(f))
 				{
 					currentButton.Clear();						// keep the button highlighted after it is released
@@ -2843,9 +2843,9 @@ namespace UI
 				(void)FileManager::NextCard();
 				break;
 
-			// case evKeyboard:
-			// 	ShowKeyboard();
-			// 	break;
+			case evKeyboard:
+				ShowKeyboard();
+				break;
 
 			case evInvertX:
 				MirrorDisplay();
@@ -3203,7 +3203,7 @@ namespace UI
 			case evTabControl:
 			case evTabStatus:
 			case evTabMsg:
-			// case evTabSetup:
+			case evTabSetup:
 				StopAdjusting();
 				TouchBeep();
 				{
